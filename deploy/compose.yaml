@@ -1,0 +1,60 @@
+# Reference Compose stack for LupiraDavApi.
+# One stateless .NET 10 service — NO database. A CalDAV/CardDAV protocol gateway over the three
+# /dav-backend upstreams (cal = VEVENT, tasks = VTODO, contact = vCard) reached over the LAN.
+#
+# Every host, port, and identity-provider URL below is an OVERRIDABLE SAMPLE wired to a ${VAR:-default}
+# env var — the defaults are illustrative, not required. Set them for your own environment.
+services:
+  lupira-dav-api:
+    image: danbro96/lupira-dav-api:${IMAGE_TAG:-latest}
+    container_name: lupira-dav-api
+    environment:
+      # /dav auth — HTTP Basic resolved by an LDAP search+bind. Point Ldap__* at your directory.
+      Ldap__Uri: ${LDAP_URI:-ldap://authentik-ldap:3389}
+      Ldap__BaseDn: ${LDAP_BASE_DN:-dc=ldap,dc=goauthentik,dc=io}
+      Ldap__ReaderDn: ${LDAP_READER_DN:-cn=ldapservice,ou=users,dc=ldap,dc=goauthentik,dc=io}
+      Ldap__ReaderSecret: ${LUPIRA_DAV_LDAP_SECRET:?required}
+      Ldap__Filter: "(&(objectClass=user)(mail={0}))"   # login by email
+
+      # Upstreams — in-network hops, never the public tunnel URLs. The scope selects the audience
+      # mapping on the gateway's client-credentials token (aud=lupira-cal / -tasks / -contact).
+      Backends__Cal__BaseUrl: ${CAL_BASE_URL:-http://lupira-cal-api:8080/}
+      Backends__Cal__Scope: ${CAL_SCOPE:-lupira-cal-aud}
+      Backends__Tasks__BaseUrl: ${TASKS_BASE_URL:-http://lupira-tasks-api:8080/}
+      Backends__Tasks__Scope: ${TASKS_SCOPE:-lupira-tasks-aud}
+      Backends__Contact__BaseUrl: ${CONTACT_BASE_URL:-http://lupira-contact-api:8080/}
+      Backends__Contact__Scope: ${CONTACT_SCOPE:-lupira-contact-aud}
+
+      # The gateway's service identity (one confidential client-credentials client).
+      ServiceAuth__TokenUrl: ${SERVICE_TOKEN_URL:-https://auth.lupira.com/application/o/token/}
+      ServiceAuth__ClientId: ${SERVICE_CLIENT_ID:-lupira-dav-svc}
+      ServiceAuth__ClientSecret: ${LUPIRA_DAV_CLIENT_SECRET:?required}
+
+      # OTEL — optional OTLP export (http/protobuf; 5-min metric cadence). Unset endpoint = silent no-op.
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-http/protobuf}
+      OTEL_EXPORTER_OTLP_HEADERS: ${OTEL_EXPORTER_OTLP_HEADERS:-}
+      OTEL_METRIC_EXPORT_INTERVAL: ${OTEL_METRIC_EXPORT_INTERVAL:-300000}
+      OTEL_RESOURCE_ATTRIBUTES: ${OTEL_RESOURCE_ATTRIBUTES:-deployment.environment=prod}
+    ports:
+      - "${HOST_PORT:-42180}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/readyz || exit 1"]
+      interval: 60s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - default
+      - medelynas_data         # authentik-ldap + the three backend containers over LAN
+      - medelynas_telemetry    # OTel collector
+networks:
+  default:
+    driver: bridge
+  medelynas_data:
+    external: true
+    name: medelynas_data
+  medelynas_telemetry:
+    external: true
+    name: medelynas_telemetry
