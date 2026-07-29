@@ -9,15 +9,15 @@ using System.Text.Encodings.Web;
 namespace LupiraDavApi.Auth;
 
 /// <summary>
-/// HTTP Basic auth for the /dav surface (DAV clients can't do OIDC). The decoded (lowercased) email becomes
-/// the principal — the gateway carries it to the backends as the acting-user path segment, where each
-/// service resolves/JIT-provisions its own principal by email so DAV and OIDC identities converge.
+/// HTTP Basic auth for the /dav surface (DAV clients can't do OIDC). The decoded, lowercased email becomes the
+/// principal — the gateway carries it to the backends as the acting-user path segment, where each service
+/// resolves/JIT-provisions its own principal by email so DAV and OIDC identities converge. Mirrors LupiraCalApi's
+/// handler; only the realm + namespace differ.
 ///
-/// Production: the password is bound against the Authentik LDAP outpost — search as the reader service
-/// account for the user by mail, then re-bind as that user DN with the supplied password. A successful
-/// bind also implies membership of the gating group (the outpost only lets bound members search/bind).
-/// In Development any password is accepted (login = email) so the surface is testable without LDAP.
-/// Ported verbatim from LupiraCalApi's proven handler; only the realm + namespace differ.
+/// Production binds the password against the Authentik LDAP outpost: search as the reader service account for the
+/// user by mail, then re-bind as that user DN with the supplied password. A successful bind also implies membership
+/// of the gating group (the outpost only lets bound members search/bind). In Development any password is accepted
+/// (login = email) so the surface is testable without LDAP.
 /// </summary>
 public sealed class DavBasicAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {

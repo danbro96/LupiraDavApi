@@ -101,8 +101,6 @@ public static class DavRouter
         }
     }
 
-    // ---------- home listings ----------
-
     static async Task CalendarHomePropfind(HttpContext ctx, DavBackendRegistry backends, string baseUrl, string email, bool deep, CancellationToken ct)
     {
         var responses = new List<XElement>
@@ -137,8 +135,6 @@ public static class DavRouter
         await WriteMultiStatus(ctx, MultiStatus([.. responses]));
     }
 
-    // ---------- collection PROPFIND ----------
-
     static async Task CollectionPropfind(HttpContext ctx, IDavBackend backend, DavTarget target, string baseUrl, string email, bool deep, CancellationToken ct)
     {
         // Collection props come off the collections listing (the contract has no per-collection GET).
@@ -162,8 +158,6 @@ public static class DavRouter
         }
         await WriteMultiStatus(ctx, MultiStatus([.. responses]));
     }
-
-    // ---------- REPORT ----------
 
     static async Task HandleReport(HttpContext ctx, IDavBackend backend, DavTarget target, string baseUrl, string email, CancellationToken ct)
     {
@@ -203,8 +197,6 @@ public static class DavRouter
                 new XElement(dataName, r.Content)))]));
     }
 
-    // ---------- resource GET / PUT / DELETE ----------
-
     static async Task GetResource(HttpContext ctx, IDavBackend backend, DavTarget target, string email, CancellationToken ct)
     {
         var blob = await backend.GetResourceAsync(email, target.CollectionId, target.Uid!, ct);
@@ -234,8 +226,6 @@ public static class DavRouter
         var (ifMatch, _) = Preconditions(ctx);
         ctx.Response.StatusCode = await backend.DeleteResourceAsync(email, target.CollectionId, target.Uid!, ifMatch, ct);
     }
-
-    // ---------- plumbing ----------
 
     static (string? IfMatch, bool IfNoneMatchStar) Preconditions(HttpContext ctx)
     {
