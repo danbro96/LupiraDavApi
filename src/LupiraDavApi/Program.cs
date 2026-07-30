@@ -52,7 +52,9 @@ builder.Services.AddOpenTelemetry()
     .ConfigureResource(r => r.AddService("lupira-dav-api"))
     .WithTracing(t =>
     {
-        t.AddAspNetCoreInstrumentation();
+        // Health probes are polled constantly by docker + devops-monitor; their spans add nothing.
+        t.AddAspNetCoreInstrumentation(o => o.Filter = ctx =>
+            ctx.Request.Path != "/livez" && ctx.Request.Path != "/readyz");
         t.AddHttpClientInstrumentation();
         if (!string.IsNullOrWhiteSpace(otlpEndpoint)) t.AddOtlpExporter();
     })
@@ -91,8 +93,10 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 // Health probes (self-only).
-app.MapHealthChecks("/livez", new HealthCheckOptions { Predicate = _ => false });
-app.MapHealthChecks("/readyz", new HealthCheckOptions { Predicate = _ => false });
+app.MapHealthChecks("/livez", new HealthCheckOptions { Predicate = _ => false })
+    .DisableHttpMetrics();
+app.MapHealthChecks("/readyz", new HealthCheckOptions { Predicate = _ => false })
+    .DisableHttpMetrics();
 
 // DAV service discovery (anonymous): clients probe these before auth, then follow to /dav/.
 app.MapMethods("/.well-known/caldav", ["GET", "PROPFIND", "OPTIONS"], () => Results.Redirect("/dav/", permanent: true));
