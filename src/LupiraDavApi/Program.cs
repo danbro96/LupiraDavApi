@@ -104,7 +104,7 @@ app.MapMethods("/.well-known/carddav", ["GET", "PROPFIND", "OPTIONS"], () => Res
 
 // The unified CalDAV/CardDAV catch-all (Basic auth). All HTTP verbs — including PROPFIND/REPORT —
 // reach DavRouter, which dispatches on the method. The cast picks the RequestDelegate Map overload.
-app.Map("/dav/{**path}", (RequestDelegate)DavRouter.Handle).RequireAuthorization("DavPolicy");
+app.Map("/dav/{**path}", (RequestDelegate) DavRouter.Handle).RequireAuthorization("DavPolicy");
 
 app.Run();
 

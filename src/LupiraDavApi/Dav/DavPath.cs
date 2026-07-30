@@ -62,7 +62,7 @@ internal static class DavPath
         {
             true when rest[0].StartsWith(CalMarker, StringComparison.Ordinal) => ("cal", rest[0][CalMarker.Length..]),
             true when rest[0].StartsWith(TasksMarker, StringComparison.Ordinal) => ("tasks", rest[0][TasksMarker.Length..]),
-            true => ((string?)null, rest[0]),
+            true => ((string?) null, rest[0]),
             false => ("contact", rest[0]),
         };
         if (backend is null || !Guid.TryParse(rawId, out var collectionId))

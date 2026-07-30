@@ -57,6 +57,7 @@ internal static class DavProtocol
             }
         }
         catch { /* malformed → treat as query (return all) */ }
+
         return [.. uids];
     }
 

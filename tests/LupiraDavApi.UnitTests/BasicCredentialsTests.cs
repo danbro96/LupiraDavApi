@@ -1,5 +1,5 @@
-using LupiraDavApi.Auth;
 using System.Text;
+using LupiraDavApi.Auth;
 using Xunit;
 
 namespace LupiraDavApi.UnitTests;

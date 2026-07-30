@@ -1,5 +1,5 @@
-using LupiraDavApi.Backends;
 using System.Xml.Linq;
+using LupiraDavApi.Backends;
 using static LupiraDavApi.Dav.DavXml;
 
 namespace LupiraDavApi.Dav;
@@ -20,6 +20,7 @@ public static class DavRouter
         var ct = ctx.RequestAborted;
 
         if (method == "OPTIONS") { WriteOptions(ctx); return; }
+
         if (method is "MKCALENDAR" or "MKCOL" or "PROPPATCH" or "MOVE" or "COPY" or "LOCK" or "UNLOCK")
         {
             ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
@@ -31,6 +32,7 @@ public static class DavRouter
 
         var target = DavPath.Parse(ctx.Request.Path.Value ?? "");
         if (target.Kind == DavTargetKind.Unknown) { ctx.Response.StatusCode = StatusCodes.Status404NotFound; return; }
+
         if (target.Email is not null && !string.Equals(target.Email, email, StringComparison.Ordinal))
         {
             ctx.Response.StatusCode = StatusCodes.Status403Forbidden;   // two-account guard: own tree only
@@ -73,21 +75,26 @@ public static class DavRouter
                     return;
 
                 case DavTargetKind.Collection:
-                {
-                    var backend = backends.Get(target.Backend!);
-                    if (method == "PROPFIND") { await CollectionPropfind(ctx, backend, target, baseUrl, email, deep, ct); return; }
-                    if (method == "REPORT") { await HandleReport(ctx, backend, target, baseUrl, email, ct); return; }
-                    break;
-                }
+                    {
+                        var backend = backends.Get(target.Backend!);
+                        if (method == "PROPFIND") { await CollectionPropfind(ctx, backend, target, baseUrl, email, deep, ct); return; }
+
+                        if (method == "REPORT") { await HandleReport(ctx, backend, target, baseUrl, email, ct); return; }
+
+                        break;
+                    }
 
                 case DavTargetKind.Resource:
-                {
-                    var backend = backends.Get(target.Backend!);
-                    if (method is "GET" or "HEAD") { await GetResource(ctx, backend, target, email, ct); return; }
-                    if (method == "PUT") { await PutResource(ctx, backend, target, email, ct); return; }
-                    if (method == "DELETE") { await DeleteResource(ctx, backend, target, email, ct); return; }
-                    break;
-                }
+                    {
+                        var backend = backends.Get(target.Backend!);
+                        if (method is "GET" or "HEAD") { await GetResource(ctx, backend, target, email, ct); return; }
+
+                        if (method == "PUT") { await PutResource(ctx, backend, target, email, ct); return; }
+
+                        if (method == "DELETE") { await DeleteResource(ctx, backend, target, email, ct); return; }
+
+                        break;
+                    }
             }
 
             ctx.Response.StatusCode = StatusCodes.Status404NotFound;
@@ -117,6 +124,7 @@ public static class DavRouter
                 foreach (var c in dto.Collections)
                     responses.Add(Response(DavPath.CollectionHref(baseUrl, email, backend, c.Id), CalendarProps(c)));
         }
+
         await WriteMultiStatus(ctx, MultiStatus([.. responses]));
     }
 
@@ -132,6 +140,7 @@ public static class DavRouter
             foreach (var a in dto.Collections)
                 responses.Add(Response(DavPath.CollectionHref(baseUrl, email, "contact", a.Id), AddressbookProps(a)));
         }
+
         await WriteMultiStatus(ctx, MultiStatus([.. responses]));
     }
 
@@ -156,6 +165,7 @@ public static class DavRouter
                     new XElement(D + "getetag", Etag(r.Etag)),
                     new XElement(D + "getcontenttype", isCard ? "text/vcard; charset=utf-8" : "text/calendar; charset=utf-8")));
         }
+
         await WriteMultiStatus(ctx, MultiStatus([.. responses]));
     }
 

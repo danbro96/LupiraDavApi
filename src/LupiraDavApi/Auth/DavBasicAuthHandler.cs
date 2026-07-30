@@ -1,10 +1,10 @@
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.Extensions.Options;
 using System.DirectoryServices.Protocols;
 using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.Options;
 
 namespace LupiraDavApi.Auth;
 
@@ -77,7 +77,7 @@ public sealed class DavBasicAuthHandler : AuthenticationHandler<AuthenticationSc
                 search.Bind(new NetworkCredential(readerDn, readerSecret));
 
                 var filter = filterTemplate.Replace("{0}", EscapeLdapFilter(email));
-                var resp = (SearchResponse)search.SendRequest(new SearchRequest(baseDn, filter, SearchScope.Subtree, "1.1"));
+                var resp = (SearchResponse) search.SendRequest(new SearchRequest(baseDn, filter, SearchScope.Subtree, "1.1"));
                 if (resp.Entries.Count == 0) return false;
                 userDn = resp.Entries[0].DistinguishedName;
             }
@@ -116,6 +116,7 @@ public sealed class DavBasicAuthHandler : AuthenticationHandler<AuthenticationSc
         {
             return false;
         }
+
         return email.Length > 0 && password.Length > 0;
     }
 

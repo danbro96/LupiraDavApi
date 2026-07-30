@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 
@@ -53,8 +52,8 @@ public sealed class DavBackendClient(string name, HttpClient http, string? scope
             if (ifMatch is not null) req.Headers.TryAddWithoutValidation("If-Match", $"\"{ifMatch}\"");
             if (ifNoneMatchStar) req.Headers.TryAddWithoutValidation("If-None-Match", "*");
         }, ct);
-        if ((int)resp.StatusCode >= 500) throw Unavailable(resp);
-        return new DavWriteOutcome((int)resp.StatusCode, resp.Headers.ETag?.Tag.Trim('"'));
+        if ((int) resp.StatusCode >= 500) throw Unavailable(resp);
+        return new DavWriteOutcome((int) resp.StatusCode, resp.Headers.ETag?.Tag.Trim('"'));
     }
 
     public async Task<int> DeleteResourceAsync(string email, Guid collectionId, string uid, string? ifMatch, CancellationToken ct)
@@ -63,8 +62,8 @@ public sealed class DavBackendClient(string name, HttpClient http, string? scope
         {
             if (ifMatch is not null) req.Headers.TryAddWithoutValidation("If-Match", $"\"{ifMatch}\"");
         }, ct);
-        if ((int)resp.StatusCode >= 500) throw Unavailable(resp);
-        return (int)resp.StatusCode;
+        if ((int) resp.StatusCode >= 500) throw Unavailable(resp);
+        return (int) resp.StatusCode;
     }
 
     public async Task<DavChangesDto?> ChangesAsync(string email, Guid collectionId, string? since, CancellationToken ct)
@@ -107,5 +106,5 @@ public sealed class DavBackendClient(string name, HttpClient http, string? scope
             ?? throw new DavBackendUnavailableException("?", "Empty response body.");
 
     private DavBackendUnavailableException Unavailable(HttpResponseMessage resp) =>
-        new(name, $"HTTP {(int)resp.StatusCode}");
+        new(name, $"HTTP {(int) resp.StatusCode}");
 }
