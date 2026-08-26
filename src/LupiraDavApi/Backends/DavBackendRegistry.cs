@@ -8,7 +8,9 @@ public sealed class DavBackendRegistry(IEnumerable<IDavBackend> backends)
         backends.ToDictionary(b => b.Name, StringComparer.Ordinal);
 
     public IDavBackend Cal => _byName["cal"];
+
     public IDavBackend Tasks => _byName["tasks"];
+
     public IDavBackend Contact => _byName["contact"];
 
     public IDavBackend Get(string name) => _byName[name];

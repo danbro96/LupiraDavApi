@@ -58,8 +58,10 @@ internal static class DavPath
         if (rest.Length == 1)
             return new DavTarget(DavTargetKind.Collection, email, backend, collectionId, IsCalendarHome: isCalendar);
         if (rest.Length == 2)
+        {
             return new DavTarget(DavTargetKind.Resource, email, backend, collectionId,
                 Uid: Uri.UnescapeDataString(StripExt(rest[1])), IsCalendarHome: isCalendar);
+        }
 
         return new DavTarget(DavTargetKind.Unknown, email);
     }
@@ -67,7 +69,9 @@ internal static class DavPath
     // ---- href builders (symmetric with Parse; emails and uids are escaped) ----
 
     public static string PrincipalHref(string baseUrl, string email) => $"{baseUrl}/dav/u/{Seg(email)}/";
+
     public static string CalendarHomeHref(string baseUrl, string email) => $"{baseUrl}/dav/u/{Seg(email)}/cal/";
+
     public static string AddressBookHomeHref(string baseUrl, string email) => $"{baseUrl}/dav/u/{Seg(email)}/card/";
 
     public static string CollectionHref(string baseUrl, string email, string backend, Guid collectionId) => backend switch

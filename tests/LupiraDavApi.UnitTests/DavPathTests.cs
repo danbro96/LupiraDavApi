@@ -76,13 +76,13 @@ public sealed class DavPathTests
     [Fact]
     public void Resource_hrefs_round_trip_including_uid_extension()
     {
-        var href = DavPath.ResourceHref("", "a@x.se", "tasks", Id, "todo-1@x");
+        var href = DavPath.ResourceHref(string.Empty, "a@x.se", "tasks", Id, "todo-1@x");
         Assert.EndsWith(".ics", href);
         var parsed = DavPath.Parse(href);
         Assert.Equal("todo-1@x", parsed.Uid);
         Assert.Equal("tasks", parsed.Backend);
 
-        var card = DavPath.ResourceHref("", "a@x.se", "contact", Id, "card-1@x");
+        var card = DavPath.ResourceHref(string.Empty, "a@x.se", "contact", Id, "card-1@x");
         Assert.EndsWith(".vcf", card);
         Assert.Equal("card-1@x", DavPath.Parse(card).Uid);
     }

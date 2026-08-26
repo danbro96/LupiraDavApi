@@ -10,14 +10,14 @@ public sealed class DavProtocolTests
     [Fact]
     public void TryParseXml_rejects_junk_and_accepts_xml()
     {
-        Assert.Null(DavProtocol.TryParseXml(""));
+        Assert.Null(DavProtocol.TryParseXml(string.Empty));
         Assert.Null(DavProtocol.TryParseXml("not xml <"));
         Assert.NotNull(DavProtocol.TryParseXml("""<d:sync-collection xmlns:d="DAV:"/>"""));
     }
 
     [Theory]
     [InlineData("4812", "4812")]
-    [InlineData("opaque-token", "opaque-token")]   // tokens are NOT parsed as numbers here
+    [InlineData("opaque-token", "opaque-token")] // tokens are NOT parsed as numbers here
     [InlineData("", null)]
     public void Sync_token_is_opaque(string value, string? expected)
     {

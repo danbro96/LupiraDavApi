@@ -100,8 +100,8 @@ public sealed class DavBasicAuthHandler : AuthenticationHandler<AuthenticationSc
     /// email/password. The split is on the <em>first</em> colon, so passwords may themselves contain colons.</summary>
     internal static bool TryParseBasicCredentials(string authorizationHeaderValue, out string email, out string password)
     {
-        email = "";
-        password = "";
+        email = string.Empty;
+        password = string.Empty;
         if (string.IsNullOrEmpty(authorizationHeaderValue) ||
             !authorizationHeaderValue.StartsWith("Basic ", StringComparison.OrdinalIgnoreCase)) return false;
         try

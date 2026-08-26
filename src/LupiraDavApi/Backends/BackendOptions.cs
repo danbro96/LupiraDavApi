@@ -4,6 +4,7 @@ namespace LupiraDavApi.Backends;
 /// injects that service's audience into the gateway's client-credentials token.</summary>
 public sealed class BackendOptions
 {
-    public string BaseUrl { get; set; } = "";
+    public string BaseUrl { get; set; } = string.Empty;
+
     public string? Scope { get; set; }
 }

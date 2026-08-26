@@ -39,7 +39,7 @@ public sealed class DavBackendClient(string name, HttpClient http, string? scope
         if (!resp.IsSuccessStatusCode) throw Unavailable(resp);
         var content = await resp.Content.ReadAsStringAsync(ct);
         var contentType = resp.Content.Headers.ContentType?.MediaType ?? "text/calendar";
-        var etag = resp.Headers.ETag?.Tag.Trim('"') ?? "";
+        var etag = resp.Headers.ETag?.Tag.Trim('"') ?? string.Empty;
         return new DavBlob(content, contentType, etag);
     }
 
@@ -69,7 +69,7 @@ public sealed class DavBackendClient(string name, HttpClient http, string? scope
     public async Task<DavChangesDto?> ChangesAsync(string email, Guid collectionId, string? since, CancellationToken ct)
     {
         var url = $"dav-backend/u/{Seg(email)}/collections/{collectionId}/changes"
-                  + (since is null ? "" : $"?since={Uri.EscapeDataString(since)}");
+                  + (since is null ? string.Empty : $"?since={Uri.EscapeDataString(since)}");
         using var resp = await SendAsync(HttpMethod.Get, url, email, null, ct);
         if (resp.StatusCode == HttpStatusCode.NotFound) return null;
         if (!resp.IsSuccessStatusCode) throw Unavailable(resp);

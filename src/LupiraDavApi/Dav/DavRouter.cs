@@ -19,7 +19,11 @@ public static class DavRouter
         var method = ctx.Request.Method.ToUpperInvariant();
         var ct = ctx.RequestAborted;
 
-        if (method == "OPTIONS") { WriteOptions(ctx); return; }
+        if (method == "OPTIONS")
+        {
+            WriteOptions(ctx);
+            return;
+        }
 
         if (method is "MKCALENDAR" or "MKCOL" or "PROPPATCH" or "MOVE" or "COPY" or "LOCK" or "UNLOCK")
         {
@@ -28,10 +32,18 @@ public static class DavRouter
         }
 
         var email = ctx.User.FindFirst("email")?.Value?.Trim().ToLowerInvariant();
-        if (string.IsNullOrEmpty(email)) { ctx.Response.StatusCode = StatusCodes.Status401Unauthorized; return; }
+        if (string.IsNullOrEmpty(email))
+        {
+            ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return;
+        }
 
-        var target = DavPath.Parse(ctx.Request.Path.Value ?? "");
-        if (target.Kind == DavTargetKind.Unknown) { ctx.Response.StatusCode = StatusCodes.Status404NotFound; return; }
+        var target = DavPath.Parse(ctx.Request.Path.Value ?? string.Empty);
+        if (target.Kind == DavTargetKind.Unknown)
+        {
+            ctx.Response.StatusCode = StatusCodes.Status404NotFound;
+            return;
+        }
 
         if (target.Email is not null && !string.Equals(target.Email, email, StringComparison.Ordinal))
         {
@@ -50,14 +62,16 @@ public static class DavRouter
             {
                 case DavTargetKind.Root when method == "PROPFIND":
                     await WriteMultiStatus(ctx, MultiStatus(
-                        Response($"{baseUrl}/dav/",
+                        Response(
+                            $"{baseUrl}/dav/",
                             new XElement(D + "resourcetype", new XElement(D + "collection")),
                             new XElement(D + "current-user-principal", Href(DavPath.PrincipalHref(baseUrl, email))))));
                     return;
 
                 case DavTargetKind.Principal when method == "PROPFIND":
                     await WriteMultiStatus(ctx, MultiStatus(
-                        Response(DavPath.PrincipalHref(baseUrl, email),
+                        Response(
+                            DavPath.PrincipalHref(baseUrl, email),
                             new XElement(D + "resourcetype", new XElement(D + "collection"), new XElement(D + "principal")),
                             new XElement(D + "displayname", email),
                             new XElement(D + "current-user-principal", Href(DavPath.PrincipalHref(baseUrl, email))),
@@ -77,9 +91,17 @@ public static class DavRouter
                 case DavTargetKind.Collection:
                     {
                         var backend = backends.Get(target.Backend!);
-                        if (method == "PROPFIND") { await CollectionPropfind(ctx, backend, target, baseUrl, email, deep, ct); return; }
+                        if (method == "PROPFIND")
+                        {
+                            await CollectionPropfind(ctx, backend, target, baseUrl, email, deep, ct);
+                            return;
+                        }
 
-                        if (method == "REPORT") { await HandleReport(ctx, backend, target, baseUrl, email, ct); return; }
+                        if (method == "REPORT")
+                        {
+                            await HandleReport(ctx, backend, target, baseUrl, email, ct);
+                            return;
+                        }
 
                         break;
                     }
@@ -87,11 +109,23 @@ public static class DavRouter
                 case DavTargetKind.Resource:
                     {
                         var backend = backends.Get(target.Backend!);
-                        if (method is "GET" or "HEAD") { await GetResource(ctx, backend, target, email, ct); return; }
+                        if (method is "GET" or "HEAD")
+                        {
+                            await GetResource(ctx, backend, target, email, ct);
+                            return;
+                        }
 
-                        if (method == "PUT") { await PutResource(ctx, backend, target, email, ct); return; }
+                        if (method == "PUT")
+                        {
+                            await PutResource(ctx, backend, target, email, ct);
+                            return;
+                        }
 
-                        if (method == "DELETE") { await DeleteResource(ctx, backend, target, email, ct); return; }
+                        if (method == "DELETE")
+                        {
+                            await DeleteResource(ctx, backend, target, email, ct);
+                            return;
+                        }
 
                         break;
                     }
@@ -108,7 +142,7 @@ public static class DavRouter
         }
     }
 
-    static async Task CalendarHomePropfind(HttpContext ctx, DavBackendRegistry backends, string baseUrl, string email, bool deep, CancellationToken ct)
+    private static async Task CalendarHomePropfind(HttpContext ctx, DavBackendRegistry backends, string baseUrl, string email, bool deep, CancellationToken ct)
     {
         var responses = new List<XElement>
         {
@@ -128,7 +162,7 @@ public static class DavRouter
         await WriteMultiStatus(ctx, MultiStatus([.. responses]));
     }
 
-    static async Task AddressBookHomePropfind(HttpContext ctx, DavBackendRegistry backends, string baseUrl, string email, bool deep, CancellationToken ct)
+    private static async Task AddressBookHomePropfind(HttpContext ctx, DavBackendRegistry backends, string baseUrl, string email, bool deep, CancellationToken ct)
     {
         var responses = new List<XElement>
         {
@@ -144,32 +178,40 @@ public static class DavRouter
         await WriteMultiStatus(ctx, MultiStatus([.. responses]));
     }
 
-    static async Task CollectionPropfind(HttpContext ctx, IDavBackend backend, DavTarget target, string baseUrl, string email, bool deep, CancellationToken ct)
+    private static async Task CollectionPropfind(HttpContext ctx, IDavBackend backend, DavTarget target, string baseUrl, string email, bool deep, CancellationToken ct)
     {
         // Collection props come off the collections listing (the contract has no per-collection GET).
         var all = await backend.CollectionsAsync(email, ct);
         var col = all.Collections.FirstOrDefault(c => c.Id == target.CollectionId);
-        if (col is null) { ctx.Response.StatusCode = StatusCodes.Status404NotFound; return; }
+        if (col is null)
+        {
+            ctx.Response.StatusCode = StatusCodes.Status404NotFound;
+            return;
+        }
 
         var isCard = target.Backend == "contact";
         var responses = new List<XElement>
         {
-            Response(DavPath.CollectionHref(baseUrl, email, target.Backend!, col.Id),
+            Response(
+                DavPath.CollectionHref(baseUrl, email, target.Backend!, col.Id),
                 isCard ? AddressbookProps(col) : CalendarProps(col)),
         };
         if (deep)
         {
             var resources = await backend.QueryAsync(email, target.CollectionId, new DavQueryRequest(), ct);
             foreach (var r in resources?.Resources ?? [])
-                responses.Add(Response(DavPath.ResourceHref(baseUrl, email, target.Backend!, col.Id, r.Uid),
+            {
+                responses.Add(Response(
+                    DavPath.ResourceHref(baseUrl, email, target.Backend!, col.Id, r.Uid),
                     new XElement(D + "getetag", Etag(r.Etag)),
                     new XElement(D + "getcontenttype", isCard ? "text/vcard; charset=utf-8" : "text/calendar; charset=utf-8")));
+            }
         }
 
         await WriteMultiStatus(ctx, MultiStatus([.. responses]));
     }
 
-    static async Task HandleReport(HttpContext ctx, IDavBackend backend, DavTarget target, string baseUrl, string email, CancellationToken ct)
+    private static async Task HandleReport(HttpContext ctx, IDavBackend backend, DavTarget target, string baseUrl, string email, CancellationToken ct)
     {
         var body = await ReadBody(ctx);
         var doc = DavProtocol.TryParseXml(body);
@@ -179,12 +221,20 @@ public static class DavRouter
         {
             var since = DavProtocol.ParseSyncToken(doc);
             var changes = await backend.ChangesAsync(email, target.CollectionId, since, ct);
-            if (changes is null) { ctx.Response.StatusCode = StatusCodes.Status404NotFound; return; }
+            if (changes is null)
+            {
+                ctx.Response.StatusCode = StatusCodes.Status404NotFound;
+                return;
+            }
 
             var responses = new List<XElement>();
             foreach (var c in changes.Changed)
-                responses.Add(Response(DavPath.ResourceHref(baseUrl, email, target.Backend!, target.CollectionId, c.Uid),
+            {
+                responses.Add(Response(
+                    DavPath.ResourceHref(baseUrl, email, target.Backend!, target.CollectionId, c.Uid),
                     new XElement(D + "getetag", Etag(c.Etag))));
+            }
+
             foreach (var uid in changes.Deleted)
                 responses.Add(DeletedResponse(DavPath.ResourceHref(baseUrl, email, target.Backend!, target.CollectionId, uid)));
             await WriteMultiStatus(ctx, MultiStatusWithToken(changes.SyncToken, [.. responses]));
@@ -198,19 +248,28 @@ public static class DavRouter
         else if (DavProtocol.ParseTimeRange(doc) is { } range) (query.Start, query.End) = range;
 
         var result = await backend.QueryAsync(email, target.CollectionId, query, ct);
-        if (result is null) { ctx.Response.StatusCode = StatusCodes.Status404NotFound; return; }
+        if (result is null)
+        {
+            ctx.Response.StatusCode = StatusCodes.Status404NotFound;
+            return;
+        }
 
         var dataName = isCard ? CR + "address-data" : C + "calendar-data";
         await WriteMultiStatus(ctx, MultiStatus([.. result.Resources.Select(r =>
-            Response(DavPath.ResourceHref(baseUrl, email, target.Backend!, target.CollectionId, r.Uid),
+            Response(
+                DavPath.ResourceHref(baseUrl, email, target.Backend!, target.CollectionId, r.Uid),
                 new XElement(D + "getetag", Etag(r.Etag)),
                 new XElement(dataName, r.Content)))]));
     }
 
-    static async Task GetResource(HttpContext ctx, IDavBackend backend, DavTarget target, string email, CancellationToken ct)
+    private static async Task GetResource(HttpContext ctx, IDavBackend backend, DavTarget target, string email, CancellationToken ct)
     {
         var blob = await backend.GetResourceAsync(email, target.CollectionId, target.Uid!, ct);
-        if (blob is null) { ctx.Response.StatusCode = StatusCodes.Status404NotFound; return; }
+        if (blob is null)
+        {
+            ctx.Response.StatusCode = StatusCodes.Status404NotFound;
+            return;
+        }
 
         ctx.Response.Headers.ETag = Etag(blob.Etag);
         ctx.Response.ContentType = $"{blob.ContentType}; charset=utf-8";
@@ -218,7 +277,7 @@ public static class DavRouter
         await ctx.Response.WriteAsync(blob.Content, ct);
     }
 
-    static async Task PutResource(HttpContext ctx, IDavBackend backend, DavTarget target, string email, CancellationToken ct)
+    private static async Task PutResource(HttpContext ctx, IDavBackend backend, DavTarget target, string email, CancellationToken ct)
     {
         var raw = await ReadBody(ctx);
         var (ifMatch, ifNoneMatchStar) = Preconditions(ctx);
@@ -231,27 +290,27 @@ public static class DavRouter
         ctx.Response.StatusCode = outcome.Status;
     }
 
-    static async Task DeleteResource(HttpContext ctx, IDavBackend backend, DavTarget target, string email, CancellationToken ct)
+    private static async Task DeleteResource(HttpContext ctx, IDavBackend backend, DavTarget target, string email, CancellationToken ct)
     {
         var (ifMatch, _) = Preconditions(ctx);
         ctx.Response.StatusCode = await backend.DeleteResourceAsync(email, target.CollectionId, target.Uid!, ifMatch, ct);
     }
 
-    static (string? IfMatch, bool IfNoneMatchStar) Preconditions(HttpContext ctx)
+    private static (string? IfMatch, bool IfNoneMatchStar) Preconditions(HttpContext ctx)
     {
         var ifMatch = ctx.Request.Headers.TryGetValue("If-Match", out var im) && im.Count > 0 ? im.ToString() : null;
         var ifNoneMatch = ctx.Request.Headers.TryGetValue("If-None-Match", out var n) ? n.ToString() : null;
         return DavProtocol.ParsePreconditions(ifMatch, ifNoneMatch);
     }
 
-    static void WriteOptions(HttpContext ctx)
+    private static void WriteOptions(HttpContext ctx)
     {
         ctx.Response.Headers["DAV"] = "1, 2, 3, calendar-access, addressbook";
         ctx.Response.Headers["Allow"] = "OPTIONS, GET, HEAD, PUT, DELETE, PROPFIND, REPORT";
         ctx.Response.StatusCode = StatusCodes.Status200OK;
     }
 
-    static async Task WriteMultiStatus(HttpContext ctx, XElement multistatus)
+    private static async Task WriteMultiStatus(HttpContext ctx, XElement multistatus)
     {
         ctx.Response.StatusCode = 207;
         ctx.Response.ContentType = "application/xml; charset=utf-8";
@@ -259,7 +318,7 @@ public static class DavRouter
         await ctx.Response.WriteAsync(doc.Declaration + "\n" + doc.ToString(SaveOptions.DisableFormatting), ctx.RequestAborted);
     }
 
-    static async Task<string> ReadBody(HttpContext ctx)
+    private static async Task<string> ReadBody(HttpContext ctx)
     {
         using var reader = new StreamReader(ctx.Request.Body);
         return await reader.ReadToEndAsync(ctx.RequestAborted);

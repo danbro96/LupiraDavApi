@@ -11,12 +11,19 @@ namespace LupiraDavApi.Dav;
 /// </summary>
 internal static class DavProtocol
 {
-    static readonly XNamespace D = "DAV:";
+    private static readonly XNamespace D = "DAV:";
 
     public static XDocument? TryParseXml(string body)
     {
         if (string.IsNullOrWhiteSpace(body)) return null;
-        try { return XDocument.Parse(body); } catch { return null; }
+        try
+        {
+            return XDocument.Parse(body);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     /// <summary>The sync-token element's value, passed to the owning backend verbatim (empty → null = initial sync).</summary>
@@ -56,7 +63,9 @@ internal static class DavProtocol
                 if (name.Length > 0) uids.Add(Uri.UnescapeDataString(name));
             }
         }
-        catch { /* malformed → treat as query (return all) */ }
+        catch
+        { /* malformed → treat as query (return all) */
+        }
 
         return [.. uids];
     }
@@ -69,7 +78,7 @@ internal static class DavProtocol
         string? ifMatch = null;
         var im = ifMatchHeader?.Trim();
         if (!string.IsNullOrEmpty(im) && im != "*") ifMatch = im.Trim('"');
-        var inm = ifNoneMatchHeader?.Trim() ?? "";
+        var inm = ifNoneMatchHeader?.Trim() ?? string.Empty;
         return (ifMatch, inm == "*");
     }
 }

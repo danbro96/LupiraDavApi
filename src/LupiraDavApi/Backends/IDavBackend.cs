@@ -12,9 +12,14 @@ public interface IDavBackend
     string Name { get; }
 
     Task<DavCollectionsDto> CollectionsAsync(string email, CancellationToken ct);
+
     Task<DavResourcesDto?> QueryAsync(string email, Guid collectionId, DavQueryRequest request, CancellationToken ct);
+
     Task<DavBlob?> GetResourceAsync(string email, Guid collectionId, string uid, CancellationToken ct);
+
     Task<DavWriteOutcome> PutResourceAsync(string email, Guid collectionId, string uid, string content, string contentType, string? ifMatch, bool ifNoneMatchStar, CancellationToken ct);
+
     Task<int> DeleteResourceAsync(string email, Guid collectionId, string uid, string? ifMatch, CancellationToken ct);
+
     Task<DavChangesDto?> ChangesAsync(string email, Guid collectionId, string? since, CancellationToken ct);
 }
