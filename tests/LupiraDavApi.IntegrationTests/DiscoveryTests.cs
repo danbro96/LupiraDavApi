@@ -6,7 +6,7 @@ namespace LupiraDavApi.IntegrationTests;
 /// <summary>The discovery chain a fresh DAVx5/iOS account walks: well-knowns → root → principal → the
 /// unified homes. One calendar-home-set serves both VEVENT calendars and VTODO lists, distinguished by
 /// supported-calendar-component-set.</summary>
-public sealed class DiscoveryTests : GatewayTest
+public sealed class DiscoveryTests : IntegrationTest
 {
     [Fact]
     public async Task Well_knowns_redirect_anonymously_to_dav()

@@ -6,7 +6,7 @@ namespace LupiraDavApi.IntegrationTests;
 /// <summary>REPORT translation: sync-collection shuttles opaque tokens and renders tombstones as 404
 /// responses; multiget forwards href uids; calendar-query forwards the time-range for server-side
 /// (backend) expansion.</summary>
-public sealed class SyncAndQueryTests : GatewayTest
+public sealed class SyncAndQueryTests : IntegrationTest
 {
     private const string Ics = "BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nUID:{0}\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
 

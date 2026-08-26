@@ -5,7 +5,7 @@ namespace LupiraDavApi.IntegrationTests;
 
 /// <summary>Blob pass-through: PUT/GET/DELETE relay bodies, ETags, preconditions, and statuses verbatim
 /// between the DAV client and the owning backend. The gateway never retries a write.</summary>
-public sealed class ReadWriteTests : GatewayTest
+public sealed class ReadWriteTests : IntegrationTest
 {
     private const string Ics = "BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nUID:evt-1@x\r\nSUMMARY:Standup\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
 

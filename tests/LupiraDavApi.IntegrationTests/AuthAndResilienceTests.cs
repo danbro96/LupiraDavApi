@@ -6,7 +6,7 @@ namespace LupiraDavApi.IntegrationTests;
 /// <summary>The gateway's own guarantees: the Basic challenge, the own-tree guard, forbidden WebDAV
 /// verbs, and the hard 503-never-partial rule for home enumeration (a missing collection reads as a
 /// deletion to DAVx5-class clients).</summary>
-public sealed class AuthAndResilienceTests : GatewayTest
+public sealed class AuthAndResilienceTests : IntegrationTest
 {
     [Fact]
     public async Task Anonymous_requests_get_the_basic_challenge()

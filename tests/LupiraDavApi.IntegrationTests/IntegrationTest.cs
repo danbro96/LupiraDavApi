@@ -5,7 +5,7 @@ using Xunit;
 namespace LupiraDavApi.IntegrationTests;
 
 /// <summary>Base for gateway tests: a fresh factory + stubs per test, and DAV request/XML helpers.</summary>
-public abstract class GatewayTest : IDisposable
+public abstract class IntegrationTest : IDisposable
 {
     protected const string Email = "anna@lupira.com";
 
