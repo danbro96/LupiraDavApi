@@ -1,18 +1,5 @@
 namespace LupiraDavApi.Dav;
 
-/// <summary>Where in the unified tree a request points.</summary>
-internal enum DavTargetKind { Root, Principal, CalendarHome, AddressBookHome, Collection, Resource, Unknown }
-
-/// <summary>A parsed /dav path: the principal email (unescaped, lowercased), and — under a home — the
-/// owning backend ("cal" | "tasks" | "contact"), collection id, and resource uid.</summary>
-internal sealed record DavTarget(
-    DavTargetKind Kind,
-    string? Email = null,
-    string? Backend = null,
-    Guid CollectionId = default,
-    string? Uid = null,
-    bool IsCalendarHome = false);
-
 /// <summary>
 /// The unified URL layout — pure parse/build, no I/O. The collection-segment markers make routing
 /// stateless: the gateway knows the owning backend from the path alone.
