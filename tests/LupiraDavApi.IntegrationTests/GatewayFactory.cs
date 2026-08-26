@@ -1,11 +1,11 @@
+using System.Net.Http.Headers;
+using System.Text;
 using LupiraDavApi.Backends;
 using LupiraDavApi.IntegrationTests.Stubs;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using System.Net.Http.Headers;
-using System.Text;
 
 namespace LupiraDavApi.IntegrationTests;
 

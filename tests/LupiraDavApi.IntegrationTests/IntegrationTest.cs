@@ -32,7 +32,7 @@ public abstract class IntegrationTest : IDisposable
 
     protected static async Task<XDocument> ReadXml(HttpResponseMessage resp)
     {
-        Assert.Equal(207, (int)resp.StatusCode);
+        Assert.Equal(207, (int) resp.StatusCode);
         return XDocument.Parse(await resp.Content.ReadAsStringAsync());
     }
 
