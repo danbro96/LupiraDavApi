@@ -1,6 +1,8 @@
 using LupiraDavApi.Auth;
 using LupiraDavApi.Backends;
 using LupiraDavApi.Dav;
+using LupiraDavApi.Dependencies;
+using LupiraDavApi.Endpoints;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -23,6 +25,17 @@ RegisterBackend("cal", backendsConfig.Cal);
 RegisterBackend("tasks", backendsConfig.Tasks);
 RegisterBackend("contact", backendsConfig.Contact);
 builder.Services.AddSingleton<DavBackendRegistry>();
+
+// Non-gating dependency probe (/depz): edges derive from the options above, probed on a dedicated client.
+var serviceAuthConfig = builder.Configuration.GetSection(ServiceAuthOptions.SectionName).Get<ServiceAuthOptions>() ?? new ServiceAuthOptions();
+builder.Services.Configure<DepzOptions>(builder.Configuration.GetSection(DepzOptions.SectionName));
+var depzOptions = builder.Configuration.GetSection(DepzOptions.SectionName).Get<DepzOptions>() ?? new DepzOptions();
+builder.Services.AddSingleton(DependencyTargets.From(backendsConfig, serviceAuthConfig));
+builder.Services.AddSingleton<DependencyReportCache>();
+builder.Services.AddSingleton<DependencyProbe>();
+builder.Services.AddHttpClient(DependencyProbe.ProbeClientName, c => c.Timeout = depzOptions.ProbeTimeout);
+if (depzOptions.Enabled)
+    builder.Services.AddHostedService<DependencyPollWorker>();
 
 void RegisterBackend(string name, BackendOptions opts)
 {
@@ -54,7 +67,7 @@ builder.Services.AddOpenTelemetry()
     {
         // Health probes are polled constantly by docker + devops-monitor; their spans add nothing.
         t.AddAspNetCoreInstrumentation(o => o.Filter = ctx =>
-            ctx.Request.Path != "/livez" && ctx.Request.Path != "/readyz");
+            ctx.Request.Path != "/livez" && ctx.Request.Path != "/readyz" && ctx.Request.Path != "/depz");
         t.AddHttpClientInstrumentation();
         if (!string.IsNullOrWhiteSpace(otlpEndpoint)) t.AddOtlpExporter();
     })
@@ -63,6 +76,7 @@ builder.Services.AddOpenTelemetry()
         m.AddAspNetCoreInstrumentation();
         m.AddHttpClientInstrumentation();
         m.AddRuntimeInstrumentation();
+        m.AddMeter("LupiraDavApi.*");
         if (!string.IsNullOrWhiteSpace(otlpEndpoint)) m.AddOtlpExporter();
     });
 
@@ -97,6 +111,7 @@ app.MapHealthChecks("/livez", new HealthCheckOptions { Predicate = _ => false })
     .DisableHttpMetrics();
 app.MapHealthChecks("/readyz", new HealthCheckOptions { Predicate = _ => false })
     .DisableHttpMetrics();
+app.MapDepz();
 
 // DAV service discovery (anonymous): clients probe these before auth, then follow to /dav/.
 app.MapMethods("/.well-known/caldav", ["GET", "PROPFIND", "OPTIONS"], () => Results.Redirect("/dav/", permanent: true));

@@ -23,6 +23,7 @@ through verbatim, and idempotency/concurrency is the backends' UID + ETag precon
 - **Failure rule**: any backend error during an enumeration → **503 for the whole response** — never a
   partial home listing (clients treat a vanished collection as deleted).
 - Discovery: `/.well-known/caldav` + `/.well-known/carddav` → `/dav/`.
+- `/depz` (`X-Probe-Key`): non-gating dependency report — probes each backend's `/pingz` with the service bearer.
 
 ## Develop
 
