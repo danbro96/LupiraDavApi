@@ -1,3 +1,4 @@
+using Lupira.Clients.ServiceTokens;
 using Lupira.Depz;
 using Lupira.Hosting.Defaults;
 using Lupira.Hosting.Health;
@@ -8,6 +9,7 @@ using LupiraDavApi.Dav;
 using LupiraDavApi.Dependencies;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,8 +17,6 @@ var builder = WebApplication.CreateBuilder(args);
 //     One confidential client (ServiceAuth) mints per-backend-audience bearers via scopes. ---
 builder.Services.Configure<BackendsOptions>(builder.Configuration.GetSection(BackendsOptions.SectionName));
 builder.Services.Configure<ServiceAuthOptions>(builder.Configuration.GetSection(ServiceAuthOptions.SectionName));
-builder.Services.AddHttpClient(nameof(ServiceTokenProvider));
-builder.Services.AddSingleton<ServiceTokenProvider>();
 
 var backendsConfig = builder.Configuration.GetSection(BackendsOptions.SectionName).Get<BackendsOptions>() ?? new BackendsOptions();
 RegisterBackend("cal", backendsConfig.Cal);
@@ -41,12 +41,21 @@ void RegisterBackend(string name, BackendOptions opts)
     {
         if (!string.IsNullOrWhiteSpace(opts.BaseUrl))
             c.BaseAddress = new Uri(opts.BaseUrl.EndsWith('/') ? opts.BaseUrl : opts.BaseUrl + "/");
+    }).AddLupiraServiceToken(sp =>
+    {
+        var auth = sp.GetRequiredService<IOptions<ServiceAuthOptions>>().Value;
+        return new OutboundHopOptions
+        {
+            BaseUrl = opts.BaseUrl,
+            TokenUrl = auth.TokenUrl,
+            ClientId = auth.ClientId,
+            ClientSecret = auth.ClientSecret,
+            Scope = opts.Scope,
+        };
     });
     builder.Services.AddSingleton<IDavBackend>(sp => new DavBackendClient(
         name,
-        sp.GetRequiredService<IHttpClientFactory>().CreateClient($"dav-backend-{name}"),
-        opts.Scope,
-        sp.GetRequiredService<ServiceTokenProvider>()));
+        sp.GetRequiredService<IHttpClientFactory>().CreateClient($"dav-backend-{name}")));
 }
 
 // --- Auth: HTTP Basic → Authentik LDAP outpost. The gateway verifies the human credential on every

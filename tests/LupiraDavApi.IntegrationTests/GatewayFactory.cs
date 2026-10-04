@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Text;
+using Lupira.Contracts.Dav;
 using LupiraDavApi.Backends;
 using LupiraDavApi.IntegrationTests.Stubs;
 using Microsoft.AspNetCore.Hosting;

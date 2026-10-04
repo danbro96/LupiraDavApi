@@ -1,6 +1,8 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using Lupira.Clients.ServiceTokens;
+using Lupira.Contracts.Dav;
 
 namespace LupiraDavApi.Backends;
 
@@ -10,7 +12,7 @@ namespace LupiraDavApi.Backends;
 /// the acting-user email as <c>X-Dev-User</c>. ETag preconditions and statuses pass through verbatim;
 /// sync tokens are opaque strings.
 /// </summary>
-public sealed class DavBackendClient(string name, HttpClient http, string? scope, ServiceTokenProvider tokens) : IDavBackend
+public sealed class DavBackendClient(string name, HttpClient http) : IDavBackend
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
@@ -81,10 +83,7 @@ public sealed class DavBackendClient(string name, HttpClient http, string? scope
     {
         using var req = new HttpRequestMessage(method, url);
         configure?.Invoke(req);
-        if (tokens.IsConfigured && !string.IsNullOrWhiteSpace(scope))
-            req.Headers.TryAddWithoutValidation("Authorization", $"Bearer {await tokens.GetTokenAsync(scope!, ct)}");
-        else
-            req.Headers.TryAddWithoutValidation("X-Dev-User", actingEmail);   // Development-only backend auth
+        req.Options.Set(ServiceTokenProvider.DevUserOverride, actingEmail);
 
         try
         {

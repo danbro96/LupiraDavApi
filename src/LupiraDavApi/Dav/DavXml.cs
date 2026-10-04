@@ -1,5 +1,5 @@
 using System.Xml.Linq;
-using LupiraDavApi.Backends;
+using Lupira.Contracts.Dav;
 
 namespace LupiraDavApi.Dav;
 

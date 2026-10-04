@@ -16,7 +16,9 @@
     <!-- A stateless protocol gateway: no Core project, no Marten, no database. The "domain" is DAV
          protocol translation over the three /dav-backend upstreams (cal, tasks, contact). -->
     <PackageReference Include="System.DirectoryServices.Protocols" Version="10.0.9" />
-    <PackageReference Include="Lupira.Depz" Version="0.1.0" />
+    <PackageReference Include="Lupira.Clients.ServiceTokens" Version="0.1.0" />
+    <PackageReference Include="Lupira.Contracts.Dav" Version="1.0.0" />
+    <PackageReference Include="Lupira.Depz" Version="0.1.1" />
     <PackageReference Include="Lupira.Hosting.Defaults" Version="0.1.0" />
     <PackageReference Include="Lupira.Hosting.Health" Version="0.1.0" />
     <PackageReference Include="Lupira.Hosting.Observability" Version="0.1.1" />

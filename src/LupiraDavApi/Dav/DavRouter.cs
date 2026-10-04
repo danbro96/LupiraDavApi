@@ -1,4 +1,5 @@
 using System.Xml.Linq;
+using Lupira.Contracts.Dav;
 using LupiraDavApi.Backends;
 using static LupiraDavApi.Dav.DavXml;
 
