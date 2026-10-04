@@ -1,8 +1,9 @@
 # syntax=docker/dockerfile:1
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
+COPY nuget.config Directory.Build.props ./
 COPY src/LupiraDavApi/LupiraDavApi.csproj src/LupiraDavApi/
-RUN dotnet restore src/LupiraDavApi/LupiraDavApi.csproj
+RUN --mount=type=secret,id=packages_token,env=PACKAGES_TOKEN dotnet restore src/LupiraDavApi/LupiraDavApi.csproj
 COPY . .
 RUN dotnet publish src/LupiraDavApi/LupiraDavApi.csproj -c Release -o /app --no-restore
 

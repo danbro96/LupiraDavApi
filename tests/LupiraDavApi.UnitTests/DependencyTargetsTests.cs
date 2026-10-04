@@ -1,3 +1,4 @@
+using Lupira.Depz;
 using LupiraDavApi.Backends;
 using LupiraDavApi.Dependencies;
 using Xunit;
@@ -35,7 +36,7 @@ public sealed class DependencyTargetsTests
         var targets = DependencyTargets.From(Backends, Auth);
 
         Assert.Equal(["http://cal:8080", "http://tasks:8080", "http://contact:8080"], targets.Select(t => t.BaseUrl));
-        Assert.Equal(["lupira-cal-aud", "lupira-tasks-aud", "lupira-contact-aud"], targets.Select(t => t.Scope));
+        Assert.Equal(["lupira-cal-aud", "lupira-tasks-aud", "lupira-contact-aud"], targets.Select(t => Credential(t).Scope));
     }
 
     [Fact]
@@ -43,10 +44,11 @@ public sealed class DependencyTargetsTests
     {
         Assert.All(DependencyTargets.From(Backends, Auth), t =>
         {
-            Assert.Equal("https://auth/token/", t.TokenUrl);
-            Assert.Equal("lupira-dav-svc", t.ClientId);
-            Assert.Equal("s3cret", t.ClientSecret);
-            Assert.Null(t.DevUser);
+            var credential = Credential(t);
+            Assert.Equal("https://auth/token/", credential.TokenUrl);
+            Assert.Equal("lupira-dav-svc", credential.ClientId);
+            Assert.Equal("s3cret", credential.ClientSecret);
+            Assert.Null(credential.DevUser);
         });
     }
 
@@ -56,7 +58,10 @@ public sealed class DependencyTargetsTests
         Assert.All(DependencyTargets.From(new BackendsOptions(), new ServiceAuthOptions()), t =>
         {
             Assert.Equal(string.Empty, t.BaseUrl);
-            Assert.Null(t.TokenUrl);
+            Assert.Null(Credential(t).TokenUrl);
         });
     }
+
+    private static ClientCredentialsProbeCredential Credential(DependencyTarget target) =>
+        Assert.IsType<ClientCredentialsProbeCredential>(target.Credential);
 }

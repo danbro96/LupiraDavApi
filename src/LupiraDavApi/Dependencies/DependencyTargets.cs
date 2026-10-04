@@ -1,3 +1,4 @@
+using Lupira.Depz;
 using LupiraDavApi.Backends;
 
 namespace LupiraDavApi.Dependencies;
@@ -17,9 +18,12 @@ public static class DependencyTargets
         Name = name,
         BaseUrl = backend.BaseUrl,
         ProbePath = "pingz",
-        TokenUrl = auth.TokenUrl,
-        ClientId = auth.ClientId,
-        ClientSecret = auth.ClientSecret,
-        Scope = backend.Scope,
+        Credential = new ClientCredentialsProbeCredential
+        {
+            TokenUrl = auth.TokenUrl,
+            ClientId = auth.ClientId,
+            ClientSecret = auth.ClientSecret,
+            Scope = backend.Scope,
+        },
     };
 }
